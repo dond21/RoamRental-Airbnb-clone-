@@ -11,6 +11,10 @@ const passport = require("passport");
 const localStrategy = require("passport-local");
 const User = require("./models/user.js");
 
+if (!process.env.NODE_ENV != "production") {
+  require("dotenv").config();
+}
+
 //routes
 const listingRouter = require("./routes/listing.js");
 const reviewRouter = require("./routes/review.js");
@@ -93,7 +97,7 @@ app.use((err, req, res, next) => {
   // res.status(statusCode).send(message);
 });
 
-app.listen(8080, () => {
+app.listen(`${process.env.PORT}`, () => {
   console.log("listening on port 8080");
 });
 

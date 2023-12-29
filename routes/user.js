@@ -4,67 +4,29 @@ const User = require("../models/user.js");
 const wrapAsync = require("../utils/wrapAsync");
 const passport = require("passport");
 const { saveRedirectUrl } = require("../middleware.js");
+const {
+  signUp,
+  renderSignUpForm,
+  login,
+  renderLoginFrom,
+  logout,
+  user_login,
+} = require("../controllers/user.js");
 
-router.get("/signup", (req, res) => {
-  res.render("users/signup.ejs");
-});
+router.route("/signup").get(renderSignUpForm).post(wrapAsync(signUp));
 
-router.post(
-  "/signup",
-  wrapAsync(async (req, res) => {
-    try {
-      let { username, email, password } = req.body;
-      const newUser = new User({
-        email,
-        username,
-      });
-      const registeredUser = await User.register(newUser, password);
-      // console.log(registeredUser);
-      req.login(registeredUser, (err) => {
-        if (err) {
-          return next(err);
-        }
-        req.flash("success", "Welcome to Wanderlust");
-        res.redirect("/listings");
-      });
-    } catch (err) {
-      req.flash("error", err.message);
-      // res.redirect("/signup");
-      let redirectUrl = res.locals.redirectUrl || "/listings";
-      res.redirect(redirectUrl);
-    }
-  })
-);
+router
+  .route("/login")
+  .get(renderLoginFrom)
+  .post(
+    saveRedirectUrl,
+    passport.authenticate("local", {
+      failureRedirect: "/login",
+      failureFlash: true,
+    }),
+    user_login
+  );
 
-router.get("/login", (req, res) => {
-  res.render("users/login.ejs");
-});
-
-router.post(
-  "/login",
-  saveRedirectUrl,
-  passport.authenticate("local", {
-    failureRedirect: "/login",
-    failureFlash: true,
-  }),
-  async (req, res) => {
-    req.flash(
-      "success",
-      "Welcome to Wanderlust! You are logged in successfully!"
-    );
-    // res.redirect("/listings");
-    res.redirect(req.session.redirectUrl);
-  }
-);
-
-router.get("/logout", (req, res) => {
-  req.logout((err) => {
-    if (err) {
-      return next(err);
-    }
-    req.flash("success", "Logged out successfully!");
-    res.redirect("/listings");
-  });
-});
+router.get("/logout", logout);
 
 module.exports = router;
